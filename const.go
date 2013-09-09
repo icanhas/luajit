@@ -82,3 +82,30 @@ const (
 	Tuserdata      = C.LUA_TUSERDATA
 	Tthread        = C.LUA_TTHREAD
 )
+
+// Garbage-collection function and options
+const (
+	// Stops the garbage collector.
+	GCstop = C.LUA_GCSTOP
+	// Restarts the garbage collector.
+	GCrestart = C.LUA_GCRESTART
+	// Performs a full garbage-collection cycle.
+	GCcollect = C.LUA_GCCOLLECT
+	// Returns the current amount of memory (in Kbytes) in use by Lua.
+	GCcount = C.LUA_GCCOUNT
+	// Returns the remainder of dividing the current amount of bytes of memory
+	// in use by Lua by 1024.
+	GCcountb = C.LUA_GCCOUNTB
+	// Performs an incremental step of garbage collection. The step "size" is
+	// controlled by data (larger values mean more steps) in a non-specified
+	// way. If you want to control the step size you must experimentally
+	// tune the value of data. The function returns 1 if the step finished a
+	// garbage-collection cycle.
+	GCstep = C.LUA_GCSTEP
+	// Sets data as the new value for the pause of the collector. The function
+	// returns the previous value of the pause.
+	GCsetpause = C.LUA_GCSETPAUSE
+	// Sets data as the new value for the step multiplier of the collector. The
+	// function returns the previous value of the step multiplier.
+	GCsetstepmul = C.LUA_GCSETSTEPMUL
+)

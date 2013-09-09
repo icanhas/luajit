@@ -124,6 +124,84 @@ func (s *State) Concat(n int) {
 	C.lua_concat(s.l, C.int(n))
 }
 
+// Returns true if the two values in valid indices i1 and i2 are equal,
+// following the semantics of the Lua == operator (that is, may call
+// metamethods). Otherwise returns false. Also returns false if any of the
+// indices is invalid.
+func (s *State) Equal(i1, i2 int) bool {
+	return int(C.lua_equal(s.l, C.int(i1), C.int(i2))) == 1
+}
+
+// Generates a Lua error. The error message (which can actually be a Lua
+// value of any type) must be on the stack top. This function does a long
+// jump, and therefore never returns.
+func (s *State) Error() {
+	C.lua_error(s.l)
+}
+
+// Controls the garbage collector.
+//
+// This function performs several tasks, according to the value of the
+// parameter what, which must be one of the luajit.GC* constants.
+func (s *State) Gc(what, data int) int {
+	return int(C.lua_gc(s.l, C.int(what), C.int(data)))
+}
+
+// Pushes onto the stack the environment table of the value at the given
+// index.
+func (s *State) Getfenv(index int) {
+	C.lua_getfenv(s.l, C.int(index))
+}
+
+func (s *State) Getinfo(what string, ar *Debug) int {
+	cs := C.CString(what)
+	defer C.free(unsafe.Pointer(cs))
+	return int(C.lua_getinfo(s.l, cs, ar.d))
+}
+
+// Pushes onto the stack the value t[k], where t is the value at the
+// given valid index.
+func (s *State) Getfield(index int, k string) {
+	cs := C.CString(k)
+	defer C.free(unsafe.Pointer(cs))
+	C.lua_getfield(s.l, C.int(index), cs)
+}
+
+// Pushes onto the stack the value of the global name.
+func (s *State) Getglobal(name string) {
+	s.Getfield(Globalsindex, name)
+}
+
+// Pushes onto the stack the metatable of the value at the given acceptable
+// index. If the index is not valid, or if the value does not have a
+// metatable, the function returns 0 and pushes nothing on the stack.
+func (s *State) Getmetatable(index int) int {
+	return int(C.lua_getmetatable(s.l, C.int(index)))
+}
+
+// Pushes onto the stack the value t[k], where t is the value at the
+// given valid index and k is the value at the top of the stack.
+//
+// This function pops the key from the stack (putting the resulting value
+// in its place). As in Lua, this function may trigger a metamethod for
+// the "index" event
+func (s *State) Gettable(index int) {
+	C.lua_gettable(s.l, C.int(index))
+}
+
+// Pops a table from the stack and sets it as the new metatable for the
+// value at the given valid index.
+func (s *State) Getmetatable(index int) {
+	C.lua_getmetatable(s.l, C.int(index))
+}
+
+// Returns the index of the top element in the stack. Because indices start
+// at 1, this result is equal to the number of elements in the stack (and
+// so 0 means an empty stack).
+func (s *State) Gettop() int {
+	return int(C.lua_gettop(s.l))
+}
+
 //export goreadchunk
 func goreadchunk(reader, buf unsafe.Pointer, buflen C.size_t) int {
 	r := (*bytes.Reader)(reader)
@@ -196,40 +274,55 @@ func (s *State) Next(index int) int {
 	return int(C.lua_next(s.l, C.int(index)))
 }
 
-func (s *State) Getinfo(what string, ar *Debug) int {
-	cs := C.CString(what)
-	defer C.free(unsafe.Pointer(cs))
-	return int(C.lua_getinfo(s.l, cs, ar.d))
-}
-
-// Pushes onto the stack the value t[k], where t is the value at the
-// given valid index.
-func (s *State) Getfield(index int, k string) {
-	cs := C.CString(k)
-	defer C.free(unsafe.Pointer(cs))
-	C.lua_getfield(s.l, C.int(index), cs)
-}
-
-// Pushes onto the stack the value of the global name.
-func (s *State) Getglobal(name string) {
-	s.Getfield(Globalsindex, name)
-}
-
-// Pushes onto the stack the value t[k], where t is the value at the
-// given valid index and k is the value at the top of the stack.
+// Creates a new thread, pushes it on the stack, and returns a pointer
+// to a State that represents this new thread. The new state returned by
+// this function shares with the original state all global objects (such
+// as tables), but has an independent execution stack.
 //
-// This function pops the key from the stack (putting the resulting value
-// in its place). As in Lua, this function may trigger a metamethod for
-// the "index" event
-func (s *State) Gettable(index int) {
-	C.lua_gettable(s.l, C.int(index))
+// There is no explicit function to close or to destroy a thread. Threads
+// are subject to garbage collection, like any Lua object.
+func (s *State) Newthread() *State {
+	l := C.lua_newthread(s.l)
+	return &State{l}
 }
 
-// Returns the index of the top element in the stack. Because indices start
-// at 1, this result is equal to the number of elements in the stack (and
-// so 0 means an empty stack).
-func (s *State) Gettop() int {
-	return int(C.lua_gettop(s.l))
+// void *lua_newuserdata (lua_State *L, size_t size);
+// TODO?
+// This function allocates a new block of memory with the given size,
+// pushes onto the stack a new full userdata with the block address, and
+// returns this address.
+//
+// Userdata represent C values in Lua. A full userdata represents a block
+// of memory. It is an object (like a table): you must create it, it can
+// have its own metatable, and you can detect when it is being collected. A
+// full userdata is only equal to itself (under raw equality).
+//
+// When Lua collects a full userdata with a gc metamethod, Lua calls the
+// metamethod and marks the userdata as finalized. When this userdata is
+// collected again then Lua frees its corresponding memory.
+
+// Calls a function in protected mode.
+//
+// Both nargs and nresults have the same meaning as in Call. If there are
+// no errors during the call, Pcall behaves exactly like Call. However,
+// if there is any error, Pcall catches it, pushes a single value on the
+// stack (the error message), and returns an error code. Like Call, Pcall
+// always removes the function and its arguments from the stack.
+//
+// If errfunc is 0, then the error message returned on the stack is exactly
+// the original error message. Otherwise, errfunc is the stack index of
+// an error handler function. (In the current implementation, this index
+// cannot be a pseudo-index.) In case of runtime errors, this function
+// will be called with the error message and its return value will be the
+// message returned on the stack by Pcall.
+//
+// Typically, the error handler function is used to add more debug
+// information to the error message, such as a stack traceback. Such
+// information cannot be gathered after the return of Pcall, since by then
+// the stack has unwound.
+func (s *State) Pcall(nargs, nresults, errfunc int) error {
+	r := int(C.lua_pcall(s.l, C.int(nargs), C.int(nresults), C.int(errfunc)))
+	return err2msg(r)
 }
 
 // Returns the "length" of the value at the given valid index: for
@@ -487,8 +580,8 @@ func (s *State) Resume(narg int) int {
 // Returns the status of the thread s.
 //
 // The status can be 0 for a normal thread, an error code if the thread
-// finished its execution with an error, or LUA_YIELD if the thread is
-// suspended.
+// finished its execution with an error, or luajit.Yield if the thread
+// is suspended.
 func (s *State) Status() int {
 	return int(C.lua_status(s.l))
 }
