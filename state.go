@@ -139,7 +139,7 @@ func gowritechunk(writer, buf unsafe.Pointer, bufsz C.size_t) int {
 	hdr.Cap = leng
 	hdr.Len = leng
 	hdr.Data = uintptr(unsafe.Pointer(cb))
-	
+
 	n, _ := w.Write(b)
 	if n < leng {
 		return 0
@@ -151,7 +151,7 @@ func gowritechunk(writer, buf unsafe.Pointer, bufsz C.size_t) int {
 // of the stack and produces a binary chunk that, if loaded again, results
 // in a function equivalent to the one dumped. As it produces parts of the
 // chunk, Dump writes to w.
-// 
+//
 // This function does not pop the Lua function from the stack.
 func (s *State) Dump(w *io.Writer) error {
 	r := int(C.dump(s.l, unsafe.Pointer(w)))
@@ -389,7 +389,7 @@ func (s *State) Setfield(index int, k string) {
 // Sets the value of a closure's upvalue. It assigns the value at the top
 // of the stack to the upvalue and returns its name. It also pops the value
 // from the stack. Parameters funcindex and n are as in the Getupvalue.
-// 
+//
 // Returns an empty string (and pops nothing) when the index is greater
 // than the number of upvalues.
 func (s *State) Setupvalue(funcindex, n int) string {

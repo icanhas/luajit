@@ -30,27 +30,27 @@ type Debug struct {
 	// "local", "method", "field", "upvalue", or "" (the empty string),
 	// according to how the function was called. (Lua uses the empty
 	// string when no other option seems to apply.)
-	Namewhat	string
+	Namewhat string
 	// The string "Lua" if the function is a Lua function, "Go" if it
 	// is a Go function, "main" if it is the main part of a chunk, and
 	// "tail" if it was a function that did a tail call. In the latter
 	// case, Lua has no other information about the function.
-	What	string
+	What string
 	// If the function was defined in a string, then Source is that
 	// string. If the function was defined in a file, then source starts
 	// with a '@' followed by the file name.
-	Source	string
-	// "Printable" version of Source, for use in error messages. 
+	Source string
+	// "Printable" version of Source, for use in error messages.
 	Shortsrc string
 	// The current line where the given function is executing. When no
 	// line information is available, currentline is set to -1.
-	Currentline	int
-	// The number of upvalues of the function. 
-	Nups	int
-	// The line number where the definition of the function starts. 
-	Linedefined	int
-	// The line number where the definition of the function ends. 
-	Lastlinedefined	int
+	Currentline int
+	// The number of upvalues of the function.
+	Nups int
+	// The line number where the definition of the function starts.
+	Linedefined int
+	// The line number where the definition of the function ends.
+	Lastlinedefined int
 
 	l *C.lua_State
 	d C.lua_Debug
@@ -84,11 +84,11 @@ func (ar *Debug) update() {
 }
 
 // Returns information about a specific function or function invocation.
-// 
+//
 // To get information about a function invocation, the parameter ar must be
 // a valid activation record that was filled by a previous call to Getstack
 // or given as argument to a hook.
-// 
+//
 // To get information about a function you push it onto the stack and start
 // the what string with the character '>'. (In that case, Getinfo pops the
 // function in the top of the stack.) For instance, to know in which line
@@ -131,10 +131,10 @@ func (d *Debug) Getinfo(what string) error {
 // or active local variable, and so on, until the last active local
 // variable). Getlocal pushes the variable's value onto the stack and
 // returns its name.
-// 
+//
 // Variable names starting with '(' (open parentheses) represent internal
 // variables (loop control variables, temporaries, and Go function locals).
-// 
+//
 // Returns an empty string (and pushes nothing) when the index is greater
 // than the number of active local variables.
 func (d *Debug) Getlocal(n int) string {
@@ -147,7 +147,7 @@ func (d *Debug) Getlocal(n int) string {
 }
 
 // Gets information about the interpreter runtime stack.
-// 
+//
 // This function fills parts of a Debug structure with an identification of
 // the activation record of the function executing at a given level. Level
 // 0 is the current running function, whereas level n+1 is the function that
@@ -167,10 +167,9 @@ func (d *Debug) Getstack(level int) error {
 // record. Parameters d and n are as in Getlocal. Setlocal assigns the
 // value at the top of the stack to the variable and returns its name. It
 // also pops the value from the stack.
-// 
+//
 // Returns an empty string (and pops nothing) when the index is greater
 // than the number of active local variables.
 func (d *Debug) Setlocal(n int) string {
 	return C.GoString(C.lua_setlocal(d.l, &d.d, C.int(n)))
 }
-
