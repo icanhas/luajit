@@ -37,6 +37,15 @@ readchunk(lua_State *l, void *data, size_t *size)
 	return rb->buf;
 }
 
+// a lua_Writer
+static int
+writechunk(lua_State *l, const void *p, size_t sz, void *ud)
+{
+	if(gowritechunk(ud, (void*)p, sz) != sz)
+		return 1;
+	return 0;
+}
+
 lua_State*
 newstate(void)
 {
@@ -61,4 +70,10 @@ load(lua_State *l, void *reader, size_t bufsz, const char *chunkname)
 	rb->buf = buf;
 	rb->bufsz = bufsz;
 	return lua_load(l, readchunk, rb, chunkname);
+}
+
+int
+dump(lua_State *l, void *ud)
+{
+	return lua_dump(l, writechunk, ud);
 }

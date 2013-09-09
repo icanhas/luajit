@@ -10,10 +10,11 @@ package luajit
 
 extern lua_State*	newstate(void);
 extern int			load(lua_State*, void*, size_t, const char*);
+extern int			dump(lua_State*, void*);
 */
 import "C"
 import (
-	"bytes"
+	"bufio"
 	"fmt"
 	"io"
 	"reflect"
@@ -128,6 +129,35 @@ func (s *State) Equal(i1, i2 int) bool {
 	return int(C.lua_equal(s.l, C.int(i1), C.int(i2))) == 1
 }
 
+//export gowritechunk
+func gowritechunk(writer, buf unsafe.Pointer, bufsz C.size_t) int {
+	w := (*bufio.Writer)(writer)
+	cb := (*C.char)(buf)
+	leng := int(bufsz)
+	var b []byte
+	hdr := (*reflect.SliceHeader)((unsafe.Pointer(&b)))
+	hdr.Cap = leng
+	hdr.Len = leng
+	hdr.Data = uintptr(unsafe.Pointer(cb))
+	
+	n, _ := w.Write(b)
+	if n < leng {
+		return 0
+	}
+	return n
+}
+
+// Dumps a function as a binary chunk. Receives a Lua function on the top
+// of the stack and produces a binary chunk that, if loaded again, results
+// in a function equivalent to the one dumped. As it produces parts of the
+// chunk, Dump writes to w.
+// 
+// This function does not pop the Lua function from the stack.
+func (s *State) Dump(w *io.Writer) error {
+	r := int(C.dump(s.l, unsafe.Pointer(w)))
+	return err2msg(r)
+}
+
 // Generates a Lua error. The error message (which can actually be a Lua
 // value of any type) must be on the stack top. This function does a long
 // jump, and therefore never returns.
@@ -193,7 +223,7 @@ func (s *State) Gettop() int {
 
 //export goreadchunk
 func goreadchunk(reader, buf unsafe.Pointer, buflen C.size_t) int {
-	r := (*bytes.Reader)(reader)
+	r := (*bufio.Reader)(reader)
 	cb := (*C.char)(buf)
 	leng := int(buflen)
 	var b []byte
