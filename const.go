@@ -4,6 +4,7 @@ package luajit
 
 /*
 #include <lua.h>
+#include <luajit.h>
 #include <lualib.h>
 */
 import "C"
@@ -122,4 +123,46 @@ const (
 	Mathlibname = C.LUA_MATHLIBNAME // math
 	Dblibname   = C.LUA_DBLIBNAME   // debug
 	Loadlibname = C.LUA_LOADLIBNAME // package
+)
+
+// VM modes
+const (
+	// Turn the whole JIT compiler on or off or flush the whole
+	// cache of compiled code.
+	Modeengine	= C.LUAJIT_MODE_ENGINE
+	// Set debug mode (idx = level).
+	Modedebug	= C.LUAJIT_MODE_DEBUG
+	// This sets the mode for the function at the stack index idx or the
+	// parent of the calling function (idx = 0). It either enables JIT
+	// compilation for a function, disables it and flushes any already
+	// compiled code or only flushes already compiled code. This applies
+	// recursively to all sub-functions of the function with Modeallfunc
+	// or only to the sub-functions with Modeallsubfunc.
+	Modefunc		= C.LUAJIT_MODE_FUNC
+	Modeallfunc	= C.LUAJIT_MODE_ALLFUNC
+	Modeallsubfunc	= C.LUAJIT_MODE_ALLSUBFUNC
+	// Flushes the specified root trace and all of its side traces from
+	// the cache. The code for the trace will be retained as long as
+	// there are any other traces which link to it.
+	Modetrace	= C.LUAJIT_MODE_TRACE
+	// This mode defines a wrapper function for calls to Go functions. If
+	// called with Modeon, the stack index at idx must be a lightuserdata
+	// object holding a pointer to the wrapper function. From now on all
+	// Go functions are called through the wrapper function. If called
+	// with Modeoff this mode is turned off and all Go functions are
+	// directly called.
+	Modewrapfunc	= C.LUAJIT_MODE_WRAPCFUNC
+
+	Modemax		= C.LUAJIT_MODE_MAX
+)
+
+// VM mode flags
+//
+// These should be ORed with the VM mode given to (*State).Setmode,
+// for example:
+//	s.Setmode(0, luajit.Modeengine|luajit.Modeon)
+const (
+	Modeoff	= C.LUAJIT_MODE_OFF	// turn feature off
+	Modeon	= C.LUAJIT_MODE_ON	// turn feature on
+	Modeflush	= C.LUAJIT_MODE_FLUSH	// flush JIT-compiled code
 )

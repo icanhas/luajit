@@ -6,6 +6,7 @@ package luajit
 
 #include <lua.h>
 #include <lauxlib.h>
+#include <luajit.h>
 #include <lualib.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -17,6 +18,7 @@ extern int			dump(lua_State*, void*);
 import "C"
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -66,6 +68,22 @@ type State struct {
 // pointer to it.
 func Newstate() *State {
 	return &State{C.newstate()}
+}
+
+// Controls VM
+// 
+// The idx argument is either 0 or a stack index (similar to the other
+// Lua/Go API functions).
+// 
+// The mode argument specifies the VM mode, which is ORed with a flag. The
+// flag can be Modeon to turn a feature on, Modeoff to turn a feature off,
+// or Modeflush to flush cached code.
+func (s *State) Setmode(idx, mode int) error {
+	if int(C.luaJIT_setmode(s.l, C.int(idx), C.int(mode))) == 0 {
+		return nil
+	} else {
+		return errors.New("bad")
+	}
 }
 
 // TODO
