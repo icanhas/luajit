@@ -1,4 +1,5 @@
 #include <lua.h>
+#include <lauxlib.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include "_cgo_export.h"
@@ -9,16 +10,6 @@ struct Readbuf {
 	char*	buf;
 	size_t	bufsz;
 };
-
-// a lua_Alloc
-static void*
-lalloc(void *ud, void *p, size_t osize, size_t nsize)
-{
-	if(nsize != 0)
-		return realloc(p, nsize);
-	free(p);
-	return NULL;
-}
 
 // a lua_Reader
 static const char*
@@ -49,7 +40,7 @@ writechunk(lua_State *l, const void *p, size_t sz, void *ud)
 lua_State*
 newstate(void)
 {
-	return lua_newstate(lalloc, NULL);
+	return luaL_newstate();
 }
 
 int
