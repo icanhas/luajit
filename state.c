@@ -2,6 +2,7 @@
 #include <lauxlib.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include "_cgo_export.h"
 
 typedef struct Readbuf	Readbuf;
@@ -19,7 +20,9 @@ readchunk(lua_State *l, void *data, size_t *size)
 	size_t sz;
 	
 	rb = data;
-	if((sz = goreadchunk(rb->reader, rb->buf, rb->bufsz)) < 1){
+	memset(rb->buf, 0, rb->bufsz);
+	sz = goreadchunk(rb->reader, rb->buf, rb->bufsz);
+	if(sz < 1){
 		free(rb->buf);
 		free(rb);
 		return NULL;
