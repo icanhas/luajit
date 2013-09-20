@@ -231,16 +231,28 @@ func goreadchunk(reader, buf unsafe.Pointer, buflen C.size_t) int {
 	hdr.Cap = leng
 	hdr.Len = leng
 	hdr.Data = uintptr(unsafe.Pointer(cb))
+	var i int
 
-	n, err := r.Read(b)
-	if err != nil {
-		return 0
+	for i = 0; i < leng; i++ {
+		bb, err := r.ReadByte()
+		b[i] = bb
+		if bb < 1 || err != nil {
+			break
+		}
 	}
-	return n
+	return i
 }
 
-// Reads a Lua chunk from an *io.Reader. If there are no errors, Load pushes
-// the compiled chunk as a Lua function on top of the stack, and returns nil.
+// BUG(ich): (*State).Load takes a *bufio.Reader because it relies on
+// the ability to make an unsafe.Pointer from that argument, which we
+// would not be able to do if that argument were an io.Reader (the logical
+// option) or any other interface. Reflection might be a way around that,
+// but for now the argument is left with the simpler, albeit less useful,
+// choice of type.
+
+// Reads a Lua chunk from a *bufio.Reader. If there are no errors, Load
+// pushes the compiled chunk as a Lua function on top of the stack,
+// and returns nil.
 //
 // Chunk reading is buffered; the bufsize argument chooses the size
 // of the internal buffer, which must be a number greater than 0.
@@ -252,7 +264,7 @@ func goreadchunk(reader, buf unsafe.Pointer, buflen C.size_t) int {
 //
 // Load automatically detects whether the chunk is text or binary, and
 // loads it accordingly (see program luac).
-func (s *State) Load(chunk *io.Reader, bufsize int, chunkname string) error {
+func (s *State) Load(chunk *bufio.Reader, bufsize int, chunkname string) error {
 	cs := C.CString(chunkname)
 	defer C.free(unsafe.Pointer(cs))
 	r := int(C.load(s.l, unsafe.Pointer(chunk), C.size_t(bufsize), (*C.char)(unsafe.Pointer(cs))))
@@ -268,7 +280,7 @@ func (s *State) Createtable(narr, nrec int) {
 }
 
 // Creates a new empty table and pushes it onto the stack. It is equivalent
-// to Createable(0, 0).
+// to Createtable(0, 0).
 func (s *State) Newtable() {
 	s.Createtable(0, 0)
 }
