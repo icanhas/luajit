@@ -6,7 +6,7 @@
 #include "_cgo_export.h"
 
 enum {
-	Bufsz=	246
+	Bufsz=	256
 };
 
 typedef struct Readbuf	Readbuf;
