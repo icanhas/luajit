@@ -5,6 +5,8 @@ package luajit
 #cgo linux LDFLAGS: -lm -ldl
 
 #include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -268,6 +270,27 @@ func (s *State) Load(chunk *bufio.Reader, chunkname string) error {
 	return err2msg(r)
 }
 
+// Loads a string as a Lua chunk.
+//
+// This function only loads the chunk; it does not run it.
+func (s *State) Loadstring(str string) error {
+	cs := C.CString(str)
+	defer C.free(unsafe.Pointer(cs))
+	r := int(C.luaL_loadstring(s.l, cs))
+	return err2msg(r)
+}
+
+// Loads the specified file as a Lua chunk. The first line in the file is
+// ignored if it starts with '#'.
+// 
+// This function only loads the chunk; it does not run it.
+func (s *State) Loadfile(filename string) error {
+	cs := C.CString(filename)
+	defer C.free(unsafe.Pointer(cs))
+	r := int(C.luaL_loadfile(s.l, cs))
+	return err2msg(r)
+}
+
 // Creates a new empty table and pushes it onto the stack. The new table
 // has space pre-allocated for narr array elements and nrec non-array
 // elements. This pre-allocation is useful when you know exactly how many
@@ -359,6 +382,10 @@ func (s *State) Pcall(nargs, nresults, errfunc int) error {
 // of memory allocated for the userdata; for other values, it is 0.
 func (s *State) Objlen(index int) int {
 	return int(C.lua_objlen(s.l, C.int(index)))
+}
+
+func (s *State) Openlibs() {
+	C.luaL_openlibs(s.l)
 }
 
 // Accepts any valid index, or 0, and sets the stack top to this
