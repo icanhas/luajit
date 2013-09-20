@@ -9,7 +9,7 @@ package luajit
 #include <stdlib.h>
 
 extern lua_State*	newstate(void);
-extern int			load(lua_State*, void*, size_t, const char*);
+extern int			load(lua_State*, void*, const char*);
 extern int			dump(lua_State*, void*);
 */
 import "C"
@@ -254,9 +254,6 @@ func goreadchunk(reader, buf unsafe.Pointer, buflen C.size_t) int {
 // pushes the compiled chunk as a Lua function on top of the stack,
 // and returns nil.
 //
-// Chunk reading is buffered; the bufsize argument chooses the size
-// of the internal buffer, which must be a number greater than 0.
-//
 // The chunkname argument gives a name to the chunk, which is used for
 // error messages and in debug information
 //
@@ -264,10 +261,10 @@ func goreadchunk(reader, buf unsafe.Pointer, buflen C.size_t) int {
 //
 // Load automatically detects whether the chunk is text or binary, and
 // loads it accordingly (see program luac).
-func (s *State) Load(chunk *bufio.Reader, bufsize int, chunkname string) error {
+func (s *State) Load(chunk *bufio.Reader, chunkname string) error {
 	cs := C.CString(chunkname)
 	defer C.free(unsafe.Pointer(cs))
-	r := int(C.load(s.l, unsafe.Pointer(chunk), C.size_t(bufsize), (*C.char)(unsafe.Pointer(cs))))
+	r := int(C.load(s.l, unsafe.Pointer(chunk), (*C.char)(unsafe.Pointer(cs))))
 	return err2msg(r)
 }
 

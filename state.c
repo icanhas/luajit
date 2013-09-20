@@ -5,6 +5,10 @@
 #include <string.h>
 #include "_cgo_export.h"
 
+enum {
+	Bufsz=	246
+};
+
 typedef struct Readbuf	Readbuf;
 struct Readbuf {
 	void*	reader;
@@ -47,12 +51,12 @@ newstate(void)
 }
 
 int
-load(lua_State *l, void *reader, size_t bufsz, const char *chunkname)
+load(lua_State *l, void *reader, const char *chunkname)
 {
 	char *buf;
 	Readbuf *rb;
 	
-	buf = malloc(bufsz);		// both allocs are freed by readchunk
+	buf = malloc(Bufsz);		// both allocs are freed by readchunk
 	if(buf == NULL)
 		return LUA_ERRMEM;
 	rb = malloc(sizeof *rb);
@@ -62,7 +66,7 @@ load(lua_State *l, void *reader, size_t bufsz, const char *chunkname)
 	}
 	rb->reader = reader;
 	rb->buf = buf;
-	rb->bufsz = bufsz;
+	rb->bufsz = Bufsz;
 	return lua_load(l, readchunk, rb, chunkname);
 }
 
