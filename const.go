@@ -113,13 +113,13 @@ const (
 
 // lualib constants
 const (
-	Filehandle		= C.LUA_FILEHANDLE
-	Colibname	= C.LUA_COLIBNAME	// coroutine
-	Tablibname	= C.LUA_TABLIBNAME	// table
-	IOlibname	= C.LUA_IOLIBNAME	// io
-	OSlibname	= C.LUA_OSLIBNAME	// os
-	Strlibname	= C.LUA_STRLIBNAME	// string
-	Mathlibname	= C.LUA_MATHLIBNAME	// math
-	Dblibname	= C.LUA_DBLIBNAME	// debug
-	Loadlibname	= C.LUA_LOADLIBNAME	// package
+	Filehandle  = C.LUA_FILEHANDLE
+	Colibname   = C.LUA_COLIBNAME   // coroutine
+	Tablibname  = C.LUA_TABLIBNAME  // table
+	IOlibname   = C.LUA_IOLIBNAME   // io
+	OSlibname   = C.LUA_OSLIBNAME   // os
+	Strlibname  = C.LUA_STRLIBNAME  // string
+	Mathlibname = C.LUA_MATHLIBNAME // math
+	Dblibname   = C.LUA_DBLIBNAME   // debug
+	Loadlibname = C.LUA_LOADLIBNAME // package
 )

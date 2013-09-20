@@ -282,7 +282,7 @@ func (s *State) Loadstring(str string) error {
 
 // Loads the specified file as a Lua chunk. The first line in the file is
 // ignored if it starts with '#'.
-// 
+//
 // This function only loads the chunk; it does not run it.
 func (s *State) Loadfile(filename string) error {
 	cs := C.CString(filename)
