@@ -4,6 +4,7 @@ package luajit
 
 /*
 #include <lua.h>
+#include <lualib.h>
 */
 import "C"
 import "fmt"
@@ -38,7 +39,7 @@ var errmsgs map[int]string = map[int]string{
 }
 
 func err2msg(errnum int) error {
-	if errnum == 0 {
+	if errnum < 1 {
 		return nil
 	}
 	return fmt.Errorf("%s", errmsgs[errnum])
@@ -108,4 +109,17 @@ const (
 	// Sets data as the new value for the step multiplier of the collector. The
 	// function returns the previous value of the step multiplier.
 	GCsetstepmul = C.LUA_GCSETSTEPMUL
+)
+
+// lualib constants
+const (
+	Filehandle		= C.LUA_FILEHANDLE
+	Colibname	= C.LUA_COLIBNAME	// coroutine
+	Tablibname	= C.LUA_TABLIBNAME	// table
+	IOlibname	= C.LUA_IOLIBNAME	// io
+	OSlibname	= C.LUA_OSLIBNAME	// os
+	Strlibname	= C.LUA_STRLIBNAME	// string
+	Mathlibname	= C.LUA_MATHLIBNAME	// math
+	Dblibname	= C.LUA_DBLIBNAME	// debug
+	Loadlibname	= C.LUA_LOADLIBNAME	// package
 )
