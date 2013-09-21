@@ -118,7 +118,7 @@ func (s *State) Call(nargs, nresults int) {
 // never shrinks the stack; if the stack is already larger than the new
 // size, it is left unchanged.
 func (s *State) Checkstack(extra int) bool {
-	return C.lua_checkstack(s.l, C.int(extra)) == 1
+	return int(C.lua_checkstack(s.l, C.int(extra))) == 1
 }
 
 // Destroys all objects in the given Lua state (calling the corresponding
@@ -454,6 +454,18 @@ func (s *State) Setupvalue(funcindex, n int) string {
 // (either Go or Lua), and false otherwise.
 func (s *State) Isfunction(index int) bool {
 	return s.Type(index) == Tfunction
+}
+
+// Returns true if the value at the given valid index is a number,
+// and false otherwise.
+func (s *State) Isnumber(index int) bool {
+	return s.Type(index) == Tnumber
+}
+
+// Returns true if the value at the given valid index is a string,
+// and false otherwise.
+func (s *State) Isstring(index int) bool {
+	return s.Type(index) == Tstring
 }
 
 // Returns true if the value at the given valid index is a table,
