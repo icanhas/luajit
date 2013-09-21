@@ -770,12 +770,12 @@ func (s *State) Tothread(index int) *State {
 	return &State{t}
 }
 
-// TODO?
-// void *lua_touserdata (lua_State *L, int index);
-//
 // If the value at the given valid index is a full userdata, returns
 // its block address. If the value is a light userdata, returns its
-// pointer. Otherwise, returns NULL.
+// pointer. Otherwise, returns unsafe.Pointer(nil).
+func (s *State) Touserdata(index int) uintptr {
+	return uintptr(C.lua_touserdata(s.l, C.int(index)))
+}
 
 // Returns the type of the value in the given valid index, or Tnone for
 // a non-valid index (that is, an index to an "empty" stack position). The
