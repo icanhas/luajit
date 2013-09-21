@@ -11,10 +11,9 @@ import "C"
 import "fmt"
 
 const (
-	Version    = C.LUA_VERSION
-	Versionnum = C.LUA_VERSION_NUM
-	Copyright  = C.LUA_COPYRIGHT
-	Authors    = C.LUA_AUTHORS
+	Version    = C.LUAJIT_VERSION
+	Versionnum = C.LUAJIT_VERSION_NUM
+	Copyright  = C.LUAJIT_COPYRIGHT
 )
 
 const (
