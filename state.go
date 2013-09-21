@@ -208,6 +208,25 @@ func (s *State) Getfield(index int, k string) {
 	C.lua_getfield(s.l, C.int(index), cs)
 }
 
+// Gets information about a closure's upvalue. (For Lua functions, upvalues
+// are the external local variables that the function uses, and that are
+// consequently included in its closure.) Getupvalue gets the index n of
+// an upvalue, pushes the upvalue's value onto the stack, and returns its
+// name. funcindex points to the closure in the stack. (Upvalues have no
+// particular order, as they are active through the whole function. So,
+// they are numbered in an arbitrary order.)
+// 
+// Returns an error (and pushes nothing) when the index is greater than the
+// number of upvalues. For Go functions, this function uses the empty string
+// "" as a name for all upvalues.
+func (s *State) Getupvalue(funcindex, n int) (string, error) {
+	r := C.lua_getupvalue(s.l, C.int(funcindex), C.int(n))
+	if r == nil {
+		return "", errors.New("index exceeds number of upvalues")
+	}
+	return C.GoString(r), nil
+}
+
 // Pushes onto the stack the value of the global name.
 func (s *State) Getglobal(name string) {
 	s.Getfield(Globalsindex, name)
@@ -445,10 +464,14 @@ func (s *State) Setfield(index int, k string) {
 // of the stack to the upvalue and returns its name. It also pops the value
 // from the stack. Parameters funcindex and n are as in the Getupvalue.
 //
-// Returns an empty string (and pops nothing) when the index is greater
+// Returns an error (and pops nothing) when the index is greater 
 // than the number of upvalues.
-func (s *State) Setupvalue(funcindex, n int) string {
-	return C.GoString(C.lua_setupvalue(s.l, C.int(funcindex), C.int(n)))
+func (s *State) Setupvalue(funcindex, n int) (string, error) {
+	r := C.lua_setupvalue(s.l, C.int(funcindex), C.int(n))
+	if r == nil {
+		return "", errors.New("index exceeds number of upvalues")
+	}
+	return C.GoString(r), nil
 }
 
 // Returns true if the value at the given valid index is a function
@@ -707,13 +730,14 @@ func (s *State) Toboolean(index int) bool {
 }
 
 // Converts a value at the given valid index to a Go function. That
-// value must be a Go function; otherwise, returns nil.
-//
-// TODO
-func (s *State) Togofunction(index int) Gofunction {
-	return func(st *State) int {
-		return 0
+// value must be a Go function; otherwise, returns an error.
+func (s *State) Togofunction(index int) (Gofunction, error) {
+	if !s.Isgofunction(index) {
+		return func(s *State) int { return 0 }, errors.New("value at index is not a Go function")
 	}
+	s.Getupvalue(index, 1)
+	defer s.Pop(1)
+	return *(*func(*State) int)(unsafe.Pointer(s.Touserdata(-1))), nil
 }
 
 // Converts the Lua value at the given valid index to a Go int. The Lua
