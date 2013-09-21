@@ -529,20 +529,20 @@ func (s *State) Pushboolean(b bool) {
 
 //export docallback
 func docallback(fp, sp unsafe.Pointer) int {
-	fn := *(*func(*State)int)(fp)
+	fn := *(*func(*State) int)(fp)
 	state := State{((*C.lua_State)(sp))}
 	return fn(&state)
 }
 
 // Pushes a new Go closure onto the stack.
 //
-// When a Go function is created, it is possible to associate some 
-// values with it, thus creating a Go closure; these values are then 
-// accessible to the function whenever it is called. To associate values 
-// with a Go function, first these values should be pushed onto the stack 
+// When a Go function is created, it is possible to associate some
+// values with it, thus creating a Go closure; these values are then
+// accessible to the function whenever it is called. To associate values
+// with a Go function, first these values should be pushed onto the stack
 // (when there are multiple values, the first value is pushed first). Then
-// Pushclosure is called to create and push the Go function onto the 
-// stack, with the argument n telling how many values should be associated 
+// Pushclosure is called to create and push the Go function onto the
+// stack, with the argument n telling how many values should be associated
 // with the function. Pushclosure also pops these values from the stack.
 //
 // The maximum value for n is 254.
@@ -735,8 +735,8 @@ func (s *State) Tonumber(index int) float64 {
 
 // Converts the value at the given acceptable index to a uintptr. The
 // value can be a userdata, a table, a thread, or a function; otherwise,
-// Topointer returns nil. Different objects will give different 
-// pointers. There is no way to convert the pointer back to its original 
+// Topointer returns nil. Different objects will give different
+// pointers. There is no way to convert the pointer back to its original
 // value.
 //
 // Typically this function is used only for debug information.
