@@ -2,21 +2,23 @@ package luajit
 
 import "testing"
 import (
+	"bufio"
 	"fmt"
 	"math/rand"
+	"strings"
 )
 
 func TestPushpop(t *testing.T) {
 	s := Newstate()
 	if s == nil {
-		t.Error("Newstate failed")
+		t.Fatal("Newstate failed")
 	}
 	r := rand.New(rand.NewSource(1))
 
 	vals := make([]float64, 1000)
 	var i int
 	if !s.Checkstack(6 * 1000) {
-		t.Error("not enough slots in stack")
+		t.Fatal("not enough slots in stack")
 	}
 	for i = 0; i < len(vals); i++ {
 		vals[i] = r.Float64() * 1000.0
@@ -54,14 +56,14 @@ func TestPushpop(t *testing.T) {
 func TestStacktypes(t *testing.T) {
 	s := Newstate()
 	if s == nil {
-		t.Error("Newstate failed")
+		t.Fatal("Newstate failed")
 	}
 	r := rand.New(rand.NewSource(2))
 
 	vals := make([]float64, 1000)
 	var i int
 	if !s.Checkstack(5 * 1000) {
-		t.Error("not enough slots in stack")
+		t.Fatal("not enough slots in stack")
 	}
 	for i = 0; i < len(vals); i++ {
 		vals[i] = r.Float64() * 1000.0
@@ -89,5 +91,89 @@ func TestStacktypes(t *testing.T) {
 		}
 		s.Pop(5)
 	}
+	s.Close()
+}
+
+func TestLoad(t *testing.T) {
+	txt := `
+		function f(x)
+			return math.sqrt(x)
+		end
+		testx = f(400)
+		testy = f(1)
+		testz = f(36)
+	`
+	s := Newstate()
+	if s == nil {
+		t.Fatal("Newstate returned nil")
+	}
+	r := bufio.NewReader(strings.NewReader(txt))
+	if r == nil {
+		t.Fatal("NewReader returned nil")
+	}
+	s.Openlibs()
+	if err := s.Load(r, "TestLoad"); err != nil {
+		errdetail := s.Tostring(-1)
+		s.Close()
+		t.Fatalf("%s -- %s", err.Error(), errdetail)
+	}
+	if err := s.Pcall(0, Multret, 0); err != nil {
+		errdetail := s.Tostring(-1)
+		s.Close()
+		t.Fatalf("%s -- %s", err.Error(), errdetail)
+	}
+	s.Getglobal("testz")
+	s.Getglobal("testy")
+	s.Getglobal("testx")
+	if n := s.Tointeger(-1); n != 20 {
+		t.Errorf("expected 20, got %d", n)
+	}
+	if n := s.Tointeger(-2); n != 1 {
+		t.Errorf("expected 1, got %d", n)
+	}
+	if n := s.Tointeger(-3); n != 6 {
+		t.Errorf("expected 6, got %d", n)
+	}
+	s.Pop(3)
+	s.Close()
+}
+
+func TestLoadstring(t *testing.T) {
+	txt := `
+		function f(x)
+			return math.sqrt(x)
+		end
+		testx = f(400)
+		testy = f(1)
+		testz = f(36)
+	`
+	s := Newstate()
+	if s == nil {
+		t.Fatal("Newstate returned nil")
+	}
+	s.Openlibs()
+	if err := s.Loadstring(txt); err != nil {
+		errdetail := s.Tostring(-1)
+		s.Close()
+		t.Fatalf("%s -- %s", err.Error(), errdetail)
+	}
+	if err := s.Pcall(0, Multret, 0); err != nil {
+		errdetail := s.Tostring(-1)
+		s.Close()
+		t.Fatalf("%s -- %s", err.Error(), errdetail)
+	}
+	s.Getglobal("testz")
+	s.Getglobal("testy")
+	s.Getglobal("testx")
+	if n := s.Tointeger(-1); n != 20 {
+		t.Errorf("expected 20, got %d", n)
+	}
+	if n := s.Tointeger(-2); n != 1 {
+		t.Errorf("expected 1, got %d", n)
+	}
+	if n := s.Tointeger(-3); n != 6 {
+		t.Errorf("expected 6, got %d", n)
+	}
+	s.Pop(3)
 	s.Close()
 }
