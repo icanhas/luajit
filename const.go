@@ -114,6 +114,23 @@ const (
 	GCsetstepmul = C.LUA_GCSETSTEPMUL
 )
 
+// Debug event codes
+const (
+	Hookcall	= C.LUA_HOOKCALL
+	Hookret	= C.LUA_HOOKRET
+	Hookline	= C.LUA_HOOKLINE
+	Hookcount	= C.LUA_HOOKCOUNT
+	Hooktailret	= C.LUA_HOOKTAILRET
+)
+
+// Debug event masks
+const (
+	Maskcall	= 1 << Hookcall
+	Maskret	= 1 << Hookret
+	Maskline	= 1 << Hookline
+	Maskcount	= 1 << Hookcount
+)
+
 // lualib constants
 const (
 	Filehandle  = C.LUA_FILEHANDLE
