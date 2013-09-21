@@ -70,7 +70,7 @@ const (
 
 // Equivalent of lua_upvalueindex.
 func Upvalueindex(i int) int {
-	return Globalsindex - i
+	return (Globalsindex - i) + 1	// Upvalueindex(1) is reserved for Go func pointer
 }
 
 // Basic types

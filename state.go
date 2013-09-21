@@ -14,6 +14,7 @@ package luajit
 extern lua_State*	newstate(void);
 extern int			load(lua_State*, void*, const char*);
 extern int			dump(lua_State*, void*);
+extern void		pushclosure(lua_State*, int);
 */
 import "C"
 import (
@@ -526,33 +527,39 @@ func (s *State) Pushboolean(b bool) {
 	}
 }
 
-// void lua_pushcclosure (lua_State *L, lua_CFunction fn, int n);
-//
-// Pushes a new C closure onto the stack.
-//
-// When a C function is created, it is possible to associate some values
-// with it, thus creating a C closure (see §3.4); these values are then
-// accessible to the function whenever it is called. To associate values
-// with a C function, first these values should be pushed onto the stack
-// (when there are multiple values, the first value is pushed first). Then
-// lua_pushcclosure is called to create and push the C function onto the
-// stack, with the argument n telling how many values should be associated
-// with the function. lua_pushcclosure also pops these values from the stack.
-//
-// The maximum value for n is 255.
+//export docallback
+func docallback(fp, sp unsafe.Pointer) int {
+	fn := *(*func(*State)int)(fp)
+	state := State{((*C.lua_State)(sp))}
+	return fn(&state)
+}
 
-// void lua_pushcfunction (lua_State *L, lua_CFunction f);
+// Pushes a new Go closure onto the stack.
 //
-// Pushes a C function onto the stack. This function receives a pointer to
-// a C function and pushes onto the stack a Lua value of type function that,
-// when called, invokes the corresponding C function.
+// When a Go function is created, it is possible to associate some 
+// values with it, thus creating a Go closure; these values are then 
+// accessible to the function whenever it is called. To associate values 
+// with a Go function, first these values should be pushed onto the stack 
+// (when there are multiple values, the first value is pushed first). Then
+// Pushclosure is called to create and push the Go function onto the 
+// stack, with the argument n telling how many values should be associated 
+// with the function. Pushclosure also pops these values from the stack.
+//
+// The maximum value for n is 254.
+func (s *State) Pushclosure(fn Gofunction, n int) {
+	C.lua_pushlightuserdata(s.l, unsafe.Pointer(&fn))
+	C.pushclosure(s.l, C.int(n))
+}
+
+// Pushes a Go function onto the stack. This function receives a pointer to
+// a Go function and pushes onto the stack a Lua value of type function that,
+// when called, invokes the corresponding Go function.
 //
 // Any function to be registered in Lua must follow the correct protocol
-// to receive its parameters and return its results (see lua_CFunction).
-//
-// lua_pushcfunction is defined as a macro:
-//
-// #define lua_pushcfunction(L,f)  lua_pushcclosure(L,f,0)
+// to receive its parameters and return its results (see Gofunction).
+func (s *State) Pushfunction(fn Gofunction) {
+	s.Pushclosure(fn, 0)
+}
 
 // Formats a string and pushes it into the stack.  Provides all formatting
 // verbs found in package fmt.  Returns a pointer to the resultant
@@ -598,7 +605,6 @@ func (s *State) Pushstring(str string) {
 
 // Pushes the thread represented by s onto the stack. Returns 1 if this
 // thread is the main thread of its state.
-// FIXME?
 func (s *State) Pushthread() int {
 	return int(C.lua_pushthread(s.l))
 }
@@ -639,6 +645,12 @@ func (s *State) Rawset(index int) {
 // that is, it does not invoke metamethods.
 func (s *State) Rawseti(index, n int) {
 	C.lua_rawseti(s.l, C.int(index), C.int(n))
+}
+
+// Sets the Go function fn as the new value of global name.
+func (s *State) Register(fn Gofunction, name string) {
+	s.Pushclosure(fn, 0)
+	s.Setglobal(name)
 }
 
 // Removes the element at the given valid index, shifting down the elements

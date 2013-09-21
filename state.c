@@ -75,3 +75,18 @@ dump(lua_State *l, void *ud)
 {
 	return lua_dump(l, writechunk, ud);
 }
+
+static int
+bounce(lua_State* s)
+{
+	void *fn;
+
+	fn = lua_touserdata(s, lua_upvalueindex(1));
+	return docallback(fn, s);
+}
+
+void
+pushclosure(lua_State *s, int n)
+{
+	lua_pushcclosure(s, bounce, n + 1);
+}
