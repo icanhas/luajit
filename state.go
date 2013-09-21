@@ -87,11 +87,6 @@ func (s *State) Setmode(idx, mode int) error {
 	}
 }
 
-// TODO
-func (s *State) Atpanic(panicf Gofunction) Gofunction {
-	return panicf
-}
-
 // Calls a function.
 //
 // To call a function you must use the following protocol: first,
