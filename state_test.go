@@ -4,6 +4,7 @@ import "testing"
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"math/rand"
 	"strings"
 )
@@ -152,6 +153,49 @@ func TestLoadstring(t *testing.T) {
 		t.Fatal("Newstate returned nil")
 	}
 	s.Openlibs()
+	if err := s.Loadstring(txt); err != nil {
+		errdetail := s.Tostring(-1)
+		s.Close()
+		t.Fatalf("%s -- %s", err.Error(), errdetail)
+	}
+	if err := s.Pcall(0, Multret, 0); err != nil {
+		errdetail := s.Tostring(-1)
+		s.Close()
+		t.Fatalf("%s -- %s", err.Error(), errdetail)
+	}
+	s.Getglobal("testz")
+	s.Getglobal("testy")
+	s.Getglobal("testx")
+	if n := s.Tointeger(-1); n != 20 {
+		t.Errorf("expected 20, got %d", n)
+	}
+	if n := s.Tointeger(-2); n != 1 {
+		t.Errorf("expected 1, got %d", n)
+	}
+	if n := s.Tointeger(-3); n != 6 {
+		t.Errorf("expected 6, got %d", n)
+	}
+	s.Pop(3)
+	s.Close()
+}
+
+func TestRegister(t *testing.T) {
+	txt := `
+		testx = mysqrt(400)
+		testy = mysqrt(1)
+		testz = mysqrt(36)
+	`
+	s := Newstate()
+	if s == nil {
+		t.Fatal("Newstate returned nil")
+	}
+	s.Openlibs()
+	s.Register(func(s *State) int {
+		n := s.Tonumber(-1)
+		s.Pop(1)
+		s.Pushnumber(math.Sqrt(n))
+		return 1
+	}, "mysqrt")
 	if err := s.Loadstring(txt); err != nil {
 		errdetail := s.Tostring(-1)
 		s.Close()
