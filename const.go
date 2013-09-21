@@ -8,7 +8,7 @@ package luajit
 #include <lualib.h>
 */
 import "C"
-import "fmt"
+import "errors"
 
 const (
 	Version    = C.LUAJIT_VERSION
@@ -31,18 +31,18 @@ const (
 	Errerr    = C.LUA_ERRERR
 )
 
-var errmsgs map[int]string = map[int]string{
-	Errrun:    "run time error",
-	Errsyntax: "syntax error",
-	Errmem:    "out of memory",
-	Errerr:    "error in error handling",
+var errmsgs map[int]error = map[int]error{
+	Errrun:    errors.New("run time error"),
+	Errsyntax: errors.New("syntax error"),
+	Errmem:    errors.New("out of memory"),
+	Errerr:    errors.New("error in error handling"),
 }
 
 func err2msg(errnum int) error {
 	if errnum < 1 {
 		return nil
 	}
-	return fmt.Errorf("%s", errmsgs[errnum])
+	return errmsgs[errnum]
 }
 
 // Pseudo-indices. Unless otherwise noted, any function that accepts valid
