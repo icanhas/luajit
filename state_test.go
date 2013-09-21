@@ -35,7 +35,7 @@ func TestPushpop(t *testing.T) {
 		if !s.Toboolean(-2) {
 			t.Errorf("expected true, got true")
 		}
-		s.Pop(3)	// pop the nil as well
+		s.Pop(3) // pop the nil as well
 		if nn := s.Tointeger(-1); nn != int(n) {
 			t.Errorf("expected int %d, got %d", int(n), nn)
 		}

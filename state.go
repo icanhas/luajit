@@ -71,10 +71,10 @@ func Newstate() *State {
 }
 
 // Controls VM
-// 
+//
 // The idx argument is either 0 or a stack index (similar to the other
 // Lua/Go API functions).
-// 
+//
 // The mode argument specifies the VM mode, which is ORed with a flag. The
 // flag can be Modeon to turn a feature on, Modeoff to turn a feature off,
 // or Modeflush to flush cached code.
