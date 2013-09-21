@@ -175,7 +175,7 @@ func gowritechunk(writer, buf unsafe.Pointer, bufsz C.size_t) int {
 // This function does not pop the Lua function from the stack.
 func (s *State) Dump(w *io.Writer) error {
 	r := int(C.dump(s.l, unsafe.Pointer(w)))
-	return err2msg(r)
+	return numtoerror(r)
 }
 
 // Generates a Lua error. The error message (which can actually be a Lua
@@ -285,7 +285,7 @@ func (s *State) Load(chunk *bufio.Reader, chunkname string) error {
 	cs := C.CString(chunkname)
 	defer C.free(unsafe.Pointer(cs))
 	r := int(C.load(s.l, unsafe.Pointer(chunk), (*C.char)(unsafe.Pointer(cs))))
-	return err2msg(r)
+	return numtoerror(r)
 }
 
 // Loads a string as a Lua chunk.
@@ -295,7 +295,7 @@ func (s *State) Loadstring(str string) error {
 	cs := C.CString(str)
 	defer C.free(unsafe.Pointer(cs))
 	r := int(C.luaL_loadstring(s.l, cs))
-	return err2msg(r)
+	return numtoerror(r)
 }
 
 // Loads the specified file as a Lua chunk. The first line in the file is
@@ -306,7 +306,7 @@ func (s *State) Loadfile(filename string) error {
 	cs := C.CString(filename)
 	defer C.free(unsafe.Pointer(cs))
 	r := int(C.luaL_loadfile(s.l, cs))
-	return err2msg(r)
+	return numtoerror(r)
 }
 
 // Creates a new empty table and pushes it onto the stack. The new table
@@ -391,7 +391,7 @@ func (s *State) Newthread() *State {
 // the stack has unwound.
 func (s *State) Pcall(nargs, nresults, errfunc int) error {
 	r := int(C.lua_pcall(s.l, C.int(nargs), C.int(nresults), C.int(errfunc)))
-	return err2msg(r)
+	return numtoerror(r)
 }
 
 // Returns the "length" of the value at the given valid index: for

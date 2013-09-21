@@ -31,18 +31,21 @@ const (
 	Errerr    = C.LUA_ERRERR
 )
 
-var errmsgs map[int]error = map[int]error{
+var errs map[int]error = map[int]error{
 	Errrun:    errors.New("run time error"),
 	Errsyntax: errors.New("syntax error"),
 	Errmem:    errors.New("out of memory"),
 	Errerr:    errors.New("error in error handling"),
 }
 
-func err2msg(errnum int) error {
+func numtoerror(errnum int) error {
 	if errnum < 1 {
 		return nil
 	}
-	return errmsgs[errnum]
+	if e, ok := errs[errnum]; ok {
+		return e
+	}
+	return errors.New("unknown error")
 }
 
 // Pseudo-indices. Unless otherwise noted, any function that accepts valid
