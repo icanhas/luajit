@@ -721,8 +721,16 @@ func (s *State) Tonumber(index int) float64 {
 	return float64(C.lua_tonumber(s.l, C.int(index)))
 }
 
-// TODO?
-// const void *lua_topointer (lua_State *L, int index);
+// Converts the value at the given acceptable index to a uintptr. The
+// value can be a userdata, a table, a thread, or a function; otherwise,
+// Topointer returns nil. Different objects will give different 
+// pointers. There is no way to convert the pointer back to its original 
+// value.
+//
+// Typically this function is used only for debug information.
+func (s *State) Topointer(index int) uintptr {
+	return uintptr(C.lua_topointer(s.l, C.int(index)))
+}
 
 // Converts the Lua value at the given valid index to a Go
 // string. The Lua value must be a string or a number; otherwise,
