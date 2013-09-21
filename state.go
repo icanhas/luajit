@@ -150,6 +150,14 @@ func (s *State) Equal(i1, i2 int) bool {
 	return int(C.lua_equal(s.l, C.int(i1), C.int(i2))) == 1
 }
 
+// Returns true if the value at valid index i1 is smaller than the value
+// at index i2, following the semantics of the Lua < operator (that is,
+// may call metamethods). Otherwise returns false. Also returns false if
+// any of the indices is invalid.
+func (s *State) Lessthan(i1, i2 int) bool {
+	return int(C.lua_lessthan(s.l, C.int(i1), C.int(i2))) == 1
+}
+
 //export gowritechunk
 func gowritechunk(writer, buf unsafe.Pointer, bufsz C.size_t) int {
 	w := (*bufio.Writer)(writer)
@@ -502,6 +510,13 @@ func (s *State) Istable(index int) bool {
 // userdata, and false otherwise.
 func (s *State) Islightuserdata(index int) bool {
 	return s.Type(index) == Tlightuserdata
+}
+
+// Returns true if the value at the given acceptable index is a userdata
+// (either full or light), and false otherwise.
+func (s *State) Isuserdata(index int) bool {
+	t := s.Type(index)
+	return t == Tuserdata || t == Tlightuserdata
 }
 
 // Returns true if the value at the given valid index is a Go function,
