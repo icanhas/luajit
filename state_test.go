@@ -192,7 +192,6 @@ func TestRegister(t *testing.T) {
 	s.Openlibs()
 	s.Register(func(s *State) int {
 		n := s.Tonumber(-1)
-		s.Pop(1)
 		s.Pushnumber(math.Sqrt(n))
 		return 1
 	}, "mysqrt")
