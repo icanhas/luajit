@@ -60,13 +60,13 @@ import (
 // 	}
 type Gofunction func(*State) int
 
-// A State keeps all state of a Lua interpreter.
+// A State keeps all state of a LuaJIT interpreter.
 type State struct {
 	l *C.lua_State
 }
 
-// Creates a new State, giving Lua a basic allocator, and returns a
-// pointer to it.
+// Creates & initializes a new State and returns a pointer to it. Returns
+// nil on error.
 func Newstate() *State {
 	return &State{C.newstate()}
 }
@@ -425,6 +425,7 @@ func (s *State) Objlen(index int) int {
 	return int(C.lua_objlen(s.l, C.int(index)))
 }
 
+// Opens all standard Lua libraries into the given state.
 func (s *State) Openlibs() {
 	C.luaL_openlibs(s.l)
 }
@@ -436,6 +437,7 @@ func (s *State) Settop(index int) {
 	C.lua_settop(s.l, C.int(index))
 }
 
+// Pops n elements from the stack.
 func (s *State) Pop(index int) {
 	s.Settop(-index - 1)
 }
