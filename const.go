@@ -24,6 +24,7 @@ const (
 
 // Thread status; 0 is OK
 const (
+	Ok        = 0
 	Yield     = C.LUA_YIELD
 	Errrun    = C.LUA_ERRRUN
 	Errsyntax = C.LUA_ERRSYNTAX

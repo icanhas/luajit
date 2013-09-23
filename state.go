@@ -702,24 +702,28 @@ func (s *State) Replace(index int) {
 	C.lua_replace(s.l, C.int(index))
 }
 
-// Starts and resumes a coroutine in a given thread.  To start a 
-// coroutine, you first create a new thread (see Newthread); then you 
-// push onto its stack the main function plus any arguments; then you call
-// Resume, with narg being the number of arguments. This call returns when
-// the coroutine suspends or finishes its execution. When it returns, the
-// stack contains all values passed to Yield, or all values returned by
-// the body function. Resume returns (true, nil) if the coroutine yields,
-// (false, nil) if the coroutine finishes its execution without errors, 
-// or (false, error) in case of errors (see Pcall). In case of errors, 
-// the stack is not unwound, so you can use the debug API over it. The 
-// error message is on the top of the stack. To restart a coroutine, you 
-// put on its stack only the values to be passed as results from yield, 
+// Starts and resumes a coroutine in a given thread.
+//
+// To start a coroutine, you first create a new thread (see Newthread);
+// then you push onto its stack the main function plus any arguments; then
+// you call Resume, with narg being the number of arguments. This call
+// returns when the coroutine suspends or finishes its execution. When
+// it returns, the stack contains all values passed to Yield, or all
+// values returned by the body function. Resume returns (true, nil) if the
+// coroutine yields, (false, nil) if the coroutine finishes its execution
+// without errors, or (false, error) in case of errors (see Pcall).
+//
+// In case of errors, the stack is not unwound, so you can use the debug
+// API over it. The error message is on the top of the stack.
+//
+// To resume a coroutine, you remove any results from the last Yield,
+// put on its stack only the values to be passed as results from the yield,
 // and then call Resume.
 func (s *State) Resume(narg int) (yield bool, e error) {
 	switch r := int(C.lua_resume(s.l, C.int(narg))); {
 	case r == Yield:
 		return true, nil
-	case r == 0:
+	case r == Ok:
 		return false, nil
 	default:
 		return false, numtoerror(r)
