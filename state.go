@@ -218,7 +218,7 @@ func (s *State) Getfield(index int, k string) {
 // name. funcindex points to the closure in the stack. (Upvalues have no
 // particular order, as they are active through the whole function. So,
 // they are numbered in an arbitrary order.)
-// 
+//
 // Returns an error (and pushes nothing) when the index is greater than the
 // number of upvalues. For Go functions, this function uses the empty string
 // "" as a name for all upvalues.
@@ -469,7 +469,7 @@ func (s *State) Setfield(index int, k string) {
 // of the stack to the upvalue and returns its name. It also pops the value
 // from the stack. Parameters funcindex and n are as in the Getupvalue.
 //
-// Returns an error (and pops nothing) when the index is greater 
+// Returns an error (and pops nothing) when the index is greater
 // than the number of upvalues.
 func (s *State) Setupvalue(funcindex, n int) (string, error) {
 	r := C.lua_setupvalue(s.l, C.int(funcindex), C.int(n))
@@ -702,21 +702,28 @@ func (s *State) Replace(index int) {
 	C.lua_replace(s.l, C.int(index))
 }
 
-// Starts and resumes a coroutine in a given thread.  To start a
-// coroutine, you first create a new thread (see Newthread); then you
-// push onto its stack the main function plus any arguments; then you
-// call Resume, with narg being the number of arguments. This call returns
-// when the coroutine suspends or finishes its execution. When it returns,
-// the stack contains all values passed to Yield, or all values returned
-// by the body function. Resume returns luajit.Yield if the coroutine
-// yields, 0 if the coroutine finishes its execution without errors,
-// or an error code in case of errors (see Pcall). In case of errors,
-// the stack is not unwound, so you can use the debug API over it. The
-// error message is on the top of the stack. To restart a coroutine, you
-// put on its stack only the values to be passed as results from yield,
+// Starts and resumes a coroutine in a given thread.  To start a 
+// coroutine, you first create a new thread (see Newthread); then you 
+// push onto its stack the main function plus any arguments; then you call
+// Resume, with narg being the number of arguments. This call returns when
+// the coroutine suspends or finishes its execution. When it returns, the
+// stack contains all values passed to Yield, or all values returned by
+// the body function. Resume returns (true, nil) if the coroutine yields,
+// (false, nil) if the coroutine finishes its execution without errors, 
+// or (false, error) in case of errors (see Pcall). In case of errors, 
+// the stack is not unwound, so you can use the debug API over it. The 
+// error message is on the top of the stack. To restart a coroutine, you 
+// put on its stack only the values to be passed as results from yield, 
 // and then call Resume.
-func (s *State) Resume(narg int) int {
-	return int(C.lua_resume(s.l, C.int(narg)))
+func (s *State) Resume(narg int) (yield bool, e error) {
+	switch r := int(C.lua_resume(s.l, C.int(narg))); {
+	case r == Yield:
+		return true, nil
+	case r == 0:
+		return false, nil
+	default:
+		return false, numtoerror(r)
+	}
 }
 
 // Returns the status of the thread s.
