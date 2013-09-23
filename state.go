@@ -835,8 +835,8 @@ func (s *State) Type(index int) int {
 
 // Returns the name of the type encoded by the value tp, which must be one
 // the values returned by Type.
-func (s *State) Typename(index int) string {
-	return C.GoString(C.lua_typename(s.l, C.int(index)))
+func (s *State) Typename(tp int) string {
+	return C.GoString(C.lua_typename(s.l, C.int(tp)))
 }
 
 // Exchange values between different threads of the /same/ global state.
