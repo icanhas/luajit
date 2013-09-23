@@ -246,6 +246,7 @@ func TestXmove(t *testing.T) {
 	}
 	s2 := s.Newthread()
 	if s2 == nil {
+		s.Close()
 		t.Fatal("Newthread returned nil")
 	}
 
@@ -253,7 +254,7 @@ func TestXmove(t *testing.T) {
 		t.Errorf("state 2 expected expected empty stack, found %d elems", n)
 	}
 	if s.Type(-1) != Tthread {
-		t.Errorf("state 1 expected thread at stack top, got %s", s.Typename(-1))
+		t.Errorf("state 1 expected thread at stack top, got %s", s.Typename(s.Type(-1)))
 	}
 
 	s.Pushinteger(1)
@@ -321,7 +322,7 @@ func TestResume(t *testing.T) {
 	if n := s2.Tointeger(2); n != 21 {
 		t.Errorf("expected 21, got %d", n)
 	}
-	
+
 	if y, err := s2.Resume(0); err != nil {
 		errdetail := s2.Tostring(-1)
 		t.Errorf("resume failed: %s – %s", err.Error(), errdetail)
