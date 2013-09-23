@@ -220,3 +220,37 @@ func TestRegister(t *testing.T) {
 	s.Pop(3)
 	s.Close()
 }
+
+func TestXmove(t *testing.T) {
+	s := Newstate()
+	if s == nil {
+		t.Fatal("Newstate returned nil")
+	}
+	s2 := s.Newthread()
+	if s2 == nil {
+		t.Fatal("Newthread returned nil")
+	}
+
+	if n := s2.Gettop(); n != 0 {
+		t.Errorf("state 2 expected expected empty stack, found %d elems", n)
+	}
+	if s.Type(-1) != Tthread {
+		t.Errorf("state 1 expected thread at stack top, got %s", s.Typename(-1))
+	}
+
+	s.Pushinteger(1)
+	s.Pushinteger(2)
+	s2.Xmove(s, 2)
+	if n := s2.Tointeger(-1); n != 2 {
+		t.Errorf("expected %d, got %d", 2, n)
+	}
+	if n := s2.Tointeger(-2); n != 1 {
+		t.Errorf("expected %d, got %d", 1, n)
+	}
+	s2.Pop(2)
+	s.Pop(1) // popping s2's thread closes it
+	if n := s.Gettop(); n != 0 {
+		t.Errorf("state 1 expected expected empty stack, found %d elems", n)
+	}
+	s.Close()
+}
