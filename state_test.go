@@ -272,3 +272,67 @@ func TestXmove(t *testing.T) {
 	}
 	s.Close()
 }
+
+func TestResume(t *testing.T) {
+	txt := `
+		function f(x)
+			coroutine.yield(10, x)
+		end
+		function g(x)
+			f(x + 1)
+			return 3
+		end
+	`
+	s := Newstate()
+	if s == nil {
+		t.Fatal("Newstate returned nil")
+	}
+	s.Openlibs()
+	if err := s.Loadstring(txt); err != nil {
+		errdetail := s.Tostring(-1)
+		s.Close()
+		t.Fatalf("%s -- %s", err.Error(), errdetail)
+	}
+	if err := s.Pcall(0, 0, 0); err != nil {
+		errdetail := s.Tostring(-1)
+		s.Close()
+		t.Fatalf("%s -- %s", err.Error(), errdetail)
+	}
+
+	s2 := s.Newthread()
+	if s2 == nil {
+		s.Close()
+		t.Fatal("Newthread returned nil")
+	}
+	s2.Getglobal("g")
+	s2.Pushinteger(20)
+	if y, err := s2.Resume(1); err != nil {
+		errdetail := s2.Tostring(-1)
+		t.Errorf("resume failed: %s – %s", err.Error(), errdetail)
+	} else if !y {
+		t.Error("expected yield")
+	}
+	if n := s2.Gettop(); n != 2 {
+		t.Errorf("expected 2 items on stack, found %d", n)
+	}
+	if n := s2.Tointeger(1); n != 10 {
+		t.Errorf("expected 10, got %d", n)
+	}
+	if n := s2.Tointeger(2); n != 21 {
+		t.Errorf("expected 21, got %d", n)
+	}
+	
+	if y, err := s2.Resume(0); err != nil {
+		errdetail := s2.Tostring(-1)
+		t.Errorf("resume failed: %s – %s", err.Error(), errdetail)
+	} else if y {
+		t.Error("thread yielded unexpectedly")
+	}
+	if n := s2.Gettop(); n != 1 {
+		t.Errorf("expected 1 item on stack, found %d", n)
+	}
+	if n := s2.Tointeger(1); n != 3 {
+		t.Errorf("expected 3, got %d", n)
+	}
+	s.Close()
+}
