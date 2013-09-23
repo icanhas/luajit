@@ -9,6 +9,24 @@ import (
 	"strings"
 )
 
+func (s *State) printstack(t *testing.T) {
+	t.Log("--- stack:")
+	n := s.Gettop()
+	for i := 1; i <= n; i++ {
+		switch s.Type(i) {
+		case Tstring:
+			t.Logf("%s", s.Tostring(i))
+		case Tnumber:
+			t.Logf("%f", s.Tonumber(i))
+		case Tboolean:
+			t.Logf("%t", s.Toboolean(i))
+		default:
+			t.Logf("(%s)", s.Typename(s.Type(i)))
+		}
+	}
+	t.Log("---")
+}
+
 func TestPushpop(t *testing.T) {
 	s := Newstate()
 	if s == nil {
