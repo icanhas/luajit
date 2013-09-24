@@ -437,6 +437,16 @@ func (s *State) Settop(index int) {
 	C.lua_settop(s.l, C.int(index))
 }
 
+// Does the equivalent to t[k] = v, where t is the value at the given valid
+// index, v is the value at the top of the stack, and k is the value just
+// below the top.
+// 
+// This function pops both the key and the value from the stack. As in Lua,
+// this function may trigger a metamethod for the "newindex" event.
+func (s *State) Settable(index int) {
+	C.lua_settable(s.l, C.int(index))
+}
+
 // Pops n elements from the stack.
 func (s *State) Pop(index int) {
 	s.Settop(-index - 1)
