@@ -12,7 +12,7 @@ extern void	sethook(lua_State*, int, int);
 */
 import "C"
 import (
-	"fmt"
+	"errors"
 	"unsafe"
 )
 
@@ -139,7 +139,7 @@ func (d *Debug) Getinfo(what string) error {
 	cs := C.CString(what)
 	defer C.free(unsafe.Pointer(cs))
 	if int(C.lua_getinfo(d.l, cs, d.d)) == 0 {
-		return fmt.Errorf("The significant owl hoots in the night.")
+		return errors.New("The significant owl hoots in the night.")
 	}
 	d.update()
 	return nil
@@ -176,7 +176,7 @@ func (d *Debug) Getlocal(n int) string {
 // called with a level greater than the stack depth, it returns the error.
 func (d *Debug) Getstack(level int) error {
 	if int(C.lua_getstack(d.l, C.int(level), d.d)) == 0 {
-		return fmt.Errorf("stack depth exceeded")
+		return errors.New("stack depth exceeded")
 	}
 	d.update()
 	return nil
@@ -242,8 +242,12 @@ func (s *State) Sethook(fn Hook, mask, count int) error {
 // value at the top of the stack to the variable and returns its name. It
 // also pops the value from the stack.
 //
-// Returns an empty string (and pops nothing) when the index is greater
+// Returns an error (and pops nothing) when the index is greater
 // than the number of active local variables.
-func (d *Debug) Setlocal(n int) string {
-	return C.GoString(C.lua_setlocal(d.l, d.d, C.int(n)))
+func (d *Debug) Setlocal(n int) (string, error) {
+	cs := C.lua_setlocal(d.l, d.d, C.int(n))
+	if cs == nil {
+		return "", errors.New("index exceeds number of local vars")
+	}
+	return C.GoString(cs), nil
 }
