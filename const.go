@@ -69,9 +69,14 @@ const (
 	Globalsindex  = C.LUA_GLOBALSINDEX // thread env, where globals live
 )
 
-// Equivalent of lua_upvalueindex.
-func Upvalueindex(i int) int {
-	return (Globalsindex - i) + 1 // Upvalueindex(1) is reserved for Go func pointer
+// Returns the pseudo-index for the nth upvalue of a Go closure.
+//
+// Whenever a Go closure is called from Lua, its upvalues are located
+// at specific pseudo-indices. These pseudo-indices are located using
+// Upvalueindex. The first value associated with a function is at position
+// Upvalueindex(1), and so on.
+func Upvalueindex(n int) int {
+	return (Globalsindex - n) + 1 // Upvalueindex(1) is reserved for Go func pointer
 }
 
 // Basic types
@@ -120,17 +125,17 @@ const (
 	// The call hook is called when the interpreter calls a function. The
 	// hook is called just after LuaJIT enters the new function, before
 	// the function gets its arguments.
-	Hookcall    = C.LUA_HOOKCALL
+	Hookcall = C.LUA_HOOKCALL
 	// The return hook is called when the interpreter returns from
 	// a function. The hook is called just before LuaJIT leaves the
 	// function. You have no access to the values to be returned by
 	// the function.
-	Hookret     = C.LUA_HOOKRET
+	Hookret = C.LUA_HOOKRET
 	// The line hook is called when the interpreter is about to start
 	// the execution of a new line of code, or when it jumps back in
 	// the code (even to the same line). (This event only happens while
 	// LuaJIT is executing a Lua function.)
-	Hookline    = C.LUA_HOOKLINE
+	Hookline = C.LUA_HOOKLINE
 	// The count hook is called after the interpreter executes every
 	// count instructions. (This event only happens while LuaJIT is
 	// executing a Lua function.)

@@ -21,7 +21,7 @@ import (
 // later use. To fill the other fields of Debug with useful information,
 // call Getinfo.
 type Debug struct {
-	// The event that triggered the current hook function..
+	// The event that triggered the current hook function.
 	Event int
 	// A reasonable name for the given function. Because functions in
 	// Lua are first-class values, they do not have a fixed name: some
@@ -212,13 +212,13 @@ func hookevent(cs unsafe.Pointer, car unsafe.Pointer) {
 }
 
 // Sets the debugging hook function.
-// 
+//
 // Argument fn is the hook function. mask specifies on which events the hook
 // will be called: it is formed by a bitwise OR of the constants Maskcall,
 // Maskret, Maskline, and Maskcount. The count argument is only meaningful
 // when the mask includes Maskcount. The hook is called for each event type
 // present in mask.
-// 
+//
 // A hook is disabled by setting mask to 0.
 func (s *State) Sethook(fn Hook, mask, count int) error {
 	s.Getglobal(namehooks)
