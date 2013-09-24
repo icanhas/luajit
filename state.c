@@ -16,7 +16,7 @@ struct Readbuf {
 	size_t	bufsz;
 };
 
-// a lua_Reader
+/* a lua_Reader */
 static const char*
 readchunk(lua_State *l, void *data, size_t *size)
 {
@@ -35,7 +35,7 @@ readchunk(lua_State *l, void *data, size_t *size)
 	return rb->buf;
 }
 
-// a lua_Writer
+/* a lua_Writer */
 static int
 writechunk(lua_State *l, const void *p, size_t sz, void *ud)
 {
@@ -56,7 +56,7 @@ load(lua_State *l, void *reader, const char *chunkname)
 	char *buf;
 	Readbuf *rb;
 	
-	buf = malloc(Bufsz);		// both allocs are freed by readchunk
+	buf = malloc(Bufsz);		/* both allocs are freed by readchunk */
 	if(buf == NULL)
 		return LUA_ERRMEM;
 	rb = malloc(sizeof *rb);
@@ -76,6 +76,7 @@ dump(lua_State *l, void *ud)
 	return lua_dump(l, writechunk, ud);
 }
 
+/* a lua_CFunction */
 static int
 bounce(lua_State* s)
 {
@@ -89,16 +90,4 @@ void
 pushclosure(lua_State *s, int n)
 {
 	lua_pushcclosure(s, bounce, n + 1);
-}
-
-static void
-bouncehook(lua_State *s, lua_Debug *ar)
-{
-	hookevent(s, ar);
-}
-
-void
-sethook(lua_State *s, int mask, int count)
-{
-	lua_sethook(s, bouncehook, mask, count);
 }
