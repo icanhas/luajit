@@ -337,3 +337,47 @@ func TestResume(t *testing.T) {
 	}
 	s.Close()
 }
+
+func TestTogofunction(t *testing.T) {
+	s := Newstate()
+	if s == nil {
+		t.Fatal("Newstate returned nil")
+	}
+	s.Openlibs()
+	s.Pushfunction(func(s *State) int {
+		n := s.Tonumber(-1)
+		s.Pushnumber(math.Sqrt(n))
+		return 1
+	})
+	fn, err := s.Togofunction(-1)
+	if err != nil {
+		s.Close()
+		t.Fatalf("%s", err.Error())
+	}
+	s.Pop(1)
+
+	s.Pushclosure(fn, 0)
+	s.Pushinteger(36)
+	if err := s.Pcall(1, 1, 0); err != nil {
+		errdetail := s.Tostring(-1)
+		s.Close()
+		t.Fatalf("%s -- %s", err.Error(), errdetail)
+	}
+	if n := s.Tointeger(-1); n != 6 {
+		t.Errorf("expected 6, got %d", n)
+	}
+	s.Pop(1)
+
+	s.Pushfunction(fn)
+	s.Pushinteger(400)
+	if err := s.Pcall(1, 1, 0); err != nil {
+		errdetail := s.Tostring(-1)
+		s.Close()
+		t.Fatalf("%s -- %s", err.Error(), errdetail)
+	}
+	if n := s.Tointeger(-1); n != 20 {
+		t.Errorf("expected 20, got %d", n)
+	}
+	s.Pop(1)
+	s.Close()
+}
