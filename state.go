@@ -289,13 +289,6 @@ func goreadchunk(reader, buf unsafe.Pointer, buflen C.size_t) int {
 	return i
 }
 
-// BUG(ich): (*State).Load takes a *bufio.Reader because it relies on
-// the ability to make an unsafe.Pointer from that argument, which we
-// would not be able to do if that argument were an io.Reader (the logical
-// option) or any other interface. Reflection might be a way around that,
-// but for now the argument is left with the simpler, albeit less useful,
-// choice of type.
-
 // Reads a Lua chunk from a *bufio.Reader. If there are no errors, Load
 // pushes the compiled chunk as a Lua function on top of the stack,
 // and returns nil.
@@ -443,7 +436,7 @@ func (s *State) Settop(index int) {
 // Does the equivalent to t[k] = v, where t is the value at the given valid
 // index, v is the value at the top of the stack, and k is the value just
 // below the top.
-// 
+//
 // This function pops both the key and the value from the stack. As in Lua,
 // this function may trigger a metamethod for the "newindex" event.
 func (s *State) Settable(index int) {
@@ -770,11 +763,14 @@ func (s *State) Toboolean(index int) bool {
 // value must be a Go function; otherwise, returns an error.
 func (s *State) Togofunction(index int) (Gofunction, error) {
 	if !s.Isgofunction(index) {
-		return func(s *State) int { return 0 }, errors.New("value at index is not a Go function")
+		nothing := func(s *State) int {
+			return 0
+		}
+		return nothing, errors.New("value at index is not a Go function")
 	}
 	s.Getupvalue(index, 1)
 	defer s.Pop(1)
-	return *(*func(*State) int)(unsafe.Pointer(s.Touserdata(-1))), nil
+	return *(*func(*State) int)(s.Touserdata(-1)), nil
 }
 
 // Converts the Lua value at the given valid index to a Go int. The Lua
@@ -801,8 +797,8 @@ func (s *State) Tonumber(index int) float64 {
 // value.
 //
 // Typically this function is used only for debug information.
-func (s *State) Topointer(index int) uintptr {
-	return uintptr(C.lua_topointer(s.l, C.int(index)))
+func (s *State) Topointer(index int) unsafe.Pointer {
+	return C.lua_topointer(s.l, C.int(index))
 }
 
 // Converts the Lua value at the given valid index to a Go
@@ -834,8 +830,8 @@ func (s *State) Tothread(index int) *State {
 // If the value at the given valid index is a full userdata, returns
 // its block address. If the value is a light userdata, returns its
 // pointer. Otherwise, returns unsafe.Pointer(nil).
-func (s *State) Touserdata(index int) uintptr {
-	return uintptr(C.lua_touserdata(s.l, C.int(index)))
+func (s *State) Touserdata(index int) unsafe.Pointer {
+	return C.lua_touserdata(s.l, C.int(index))
 }
 
 // Returns the type of the value in the given valid index, or Tnone for
