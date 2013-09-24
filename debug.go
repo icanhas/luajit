@@ -21,6 +21,7 @@ import (
 // later use. To fill the other fields of Debug with useful information,
 // call Getinfo.
 type Debug struct {
+	// The event that triggered the current hook function..
 	Event int
 	// A reasonable name for the given function. Because functions in
 	// Lua are first-class values, they do not have a fixed name: some
@@ -93,6 +94,9 @@ func (ar *Debug) update() {
 	}
 	if ar.d.what != nil {
 		ar.What = C.GoString(ar.d.what)
+		if ar.What == "C" {
+			ar.What = "Go"
+		}
 	}
 	if ar.d.source != nil {
 		ar.Source = C.GoString(ar.d.source)
@@ -185,8 +189,7 @@ func (d *Debug) Getstack(level int) error {
 //export hookevent
 func hookevent(cs unsafe.Pointer, car unsafe.Pointer) {
 	s := State{(*C.lua_State)(cs)}
-	ar := Debug{}
-	ar.d = (*C.lua_Debug)(car)
+	ar := Debug{d: (*C.lua_Debug)(car)}
 	ar.update()
 
 	s.Getglobal(namehooks)
