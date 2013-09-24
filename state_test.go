@@ -32,6 +32,7 @@ func TestPushpop(t *testing.T) {
 	if s == nil {
 		t.Fatal("Newstate failed")
 	}
+	defer s.Close()
 	r := rand.New(rand.NewSource(1))
 
 	vals := make([]float64, 1000)
@@ -69,7 +70,6 @@ func TestPushpop(t *testing.T) {
 		}
 		s.Pop(3)
 	}
-	s.Close()
 }
 
 func TestStacktypes(t *testing.T) {
@@ -77,6 +77,7 @@ func TestStacktypes(t *testing.T) {
 	if s == nil {
 		t.Fatal("Newstate failed")
 	}
+	defer s.Close()
 	r := rand.New(rand.NewSource(2))
 
 	vals := make([]float64, 1000)
@@ -110,7 +111,6 @@ func TestStacktypes(t *testing.T) {
 		}
 		s.Pop(5)
 	}
-	s.Close()
 }
 
 func TestLoad(t *testing.T) {
@@ -126,20 +126,17 @@ func TestLoad(t *testing.T) {
 	if s == nil {
 		t.Fatal("Newstate returned nil")
 	}
+	defer s.Close()
 	r := bufio.NewReader(strings.NewReader(txt))
 	if r == nil {
 		t.Fatal("NewReader returned nil")
 	}
 	s.Openlibs()
 	if err := s.Load(r, "TestLoad"); err != nil {
-		errdetail := s.Tostring(-1)
-		s.Close()
-		t.Fatalf("%s -- %s", err.Error(), errdetail)
+		t.Fatalf("%s -- %s", err.Error(), s.Tostring(-1))
 	}
 	if err := s.Pcall(0, Multret, 0); err != nil {
-		errdetail := s.Tostring(-1)
-		s.Close()
-		t.Fatalf("%s -- %s", err.Error(), errdetail)
+		t.Fatalf("%s -- %s", err.Error(), s.Tostring(-1))
 	}
 	s.Getglobal("testz")
 	s.Getglobal("testy")
@@ -154,7 +151,6 @@ func TestLoad(t *testing.T) {
 		t.Errorf("expected 6, got %d", n)
 	}
 	s.Pop(3)
-	s.Close()
 }
 
 func TestLoadstring(t *testing.T) {
@@ -170,16 +166,13 @@ func TestLoadstring(t *testing.T) {
 	if s == nil {
 		t.Fatal("Newstate returned nil")
 	}
+	defer s.Close()
 	s.Openlibs()
 	if err := s.Loadstring(txt); err != nil {
-		errdetail := s.Tostring(-1)
-		s.Close()
-		t.Fatalf("%s -- %s", err.Error(), errdetail)
+		t.Fatalf("%s -- %s", err.Error(), s.Tostring(-1))
 	}
 	if err := s.Pcall(0, Multret, 0); err != nil {
-		errdetail := s.Tostring(-1)
-		s.Close()
-		t.Fatalf("%s -- %s", err.Error(), errdetail)
+		t.Fatalf("%s -- %s", err.Error(), s.Tostring(-1))
 	}
 	s.Getglobal("testz")
 	s.Getglobal("testy")
@@ -194,7 +187,6 @@ func TestLoadstring(t *testing.T) {
 		t.Errorf("expected 6, got %d", n)
 	}
 	s.Pop(3)
-	s.Close()
 }
 
 func TestRegister(t *testing.T) {
@@ -207,6 +199,7 @@ func TestRegister(t *testing.T) {
 	if s == nil {
 		t.Fatal("Newstate returned nil")
 	}
+	defer s.Close()
 	s.Openlibs()
 	s.Register(func(s *State) int {
 		n := s.Tonumber(-1)
@@ -214,14 +207,10 @@ func TestRegister(t *testing.T) {
 		return 1
 	}, "mysqrt")
 	if err := s.Loadstring(txt); err != nil {
-		errdetail := s.Tostring(-1)
-		s.Close()
-		t.Fatalf("%s -- %s", err.Error(), errdetail)
+		t.Fatalf("%s -- %s", err.Error(), s.Tostring(-1))
 	}
 	if err := s.Pcall(0, Multret, 0); err != nil {
-		errdetail := s.Tostring(-1)
-		s.Close()
-		t.Fatalf("%s -- %s", err.Error(), errdetail)
+		t.Fatalf("%s -- %s", err.Error(), s.Tostring(-1))
 	}
 	s.Getglobal("testz")
 	s.Getglobal("testy")
@@ -236,7 +225,6 @@ func TestRegister(t *testing.T) {
 		t.Errorf("expected 6, got %d", n)
 	}
 	s.Pop(3)
-	s.Close()
 }
 
 func TestXmove(t *testing.T) {
@@ -244,9 +232,9 @@ func TestXmove(t *testing.T) {
 	if s == nil {
 		t.Fatal("Newstate returned nil")
 	}
+	defer s.Close()
 	s2 := s.Newthread()
 	if s2 == nil {
-		s.Close()
 		t.Fatal("Newthread returned nil")
 	}
 
@@ -271,7 +259,6 @@ func TestXmove(t *testing.T) {
 	if n := s.Gettop(); n != 0 {
 		t.Errorf("state 1 expected expected empty stack, found %d elems", n)
 	}
-	s.Close()
 }
 
 func TestResume(t *testing.T) {
@@ -288,28 +275,23 @@ func TestResume(t *testing.T) {
 	if s == nil {
 		t.Fatal("Newstate returned nil")
 	}
+	defer s.Close()
 	s.Openlibs()
 	if err := s.Loadstring(txt); err != nil {
-		errdetail := s.Tostring(-1)
-		s.Close()
-		t.Fatalf("%s -- %s", err.Error(), errdetail)
+		t.Fatalf("%s -- %s", err.Error(), s.Tostring(-1))
 	}
 	if err := s.Pcall(0, 0, 0); err != nil {
-		errdetail := s.Tostring(-1)
-		s.Close()
-		t.Fatalf("%s -- %s", err.Error(), errdetail)
+		t.Fatalf("%s -- %s", err.Error(), s.Tostring(-1))
 	}
 
 	s2 := s.Newthread()
 	if s2 == nil {
-		s.Close()
 		t.Fatal("Newthread returned nil")
 	}
 	s2.Getglobal("g")
 	s2.Pushinteger(20)
 	if y, err := s2.Resume(1); err != nil {
-		errdetail := s2.Tostring(-1)
-		t.Errorf("resume failed: %s – %s", err.Error(), errdetail)
+		t.Errorf("resume failed: %s – %s", err.Error(), s2.Tostring(-1))
 	} else if !y {
 		t.Error("expected yield")
 	}
@@ -324,8 +306,7 @@ func TestResume(t *testing.T) {
 	}
 
 	if y, err := s2.Resume(0); err != nil {
-		errdetail := s2.Tostring(-1)
-		t.Errorf("resume failed: %s – %s", err.Error(), errdetail)
+		t.Errorf("resume failed: %s – %s", err.Error(), s2.Tostring(-1))
 	} else if y {
 		t.Error("thread yielded unexpectedly")
 	}
@@ -335,7 +316,6 @@ func TestResume(t *testing.T) {
 	if n := s2.Tointeger(1); n != 3 {
 		t.Errorf("expected 3, got %d", n)
 	}
-	s.Close()
 }
 
 func TestTogofunction(t *testing.T) {
@@ -343,6 +323,7 @@ func TestTogofunction(t *testing.T) {
 	if s == nil {
 		t.Fatal("Newstate returned nil")
 	}
+	defer s.Close()
 	s.Openlibs()
 	s.Pushfunction(func(s *State) int {
 		n := s.Tonumber(-1)
@@ -351,7 +332,6 @@ func TestTogofunction(t *testing.T) {
 	})
 	fn, err := s.Togofunction(-1)
 	if err != nil {
-		s.Close()
 		t.Fatalf("%s", err.Error())
 	}
 	s.Pop(1)
@@ -359,9 +339,7 @@ func TestTogofunction(t *testing.T) {
 	s.Pushclosure(fn, 0)
 	s.Pushinteger(36)
 	if err := s.Pcall(1, 1, 0); err != nil {
-		errdetail := s.Tostring(-1)
-		s.Close()
-		t.Fatalf("%s -- %s", err.Error(), errdetail)
+		t.Fatalf("%s -- %s", err.Error(), s.Tostring(-1))
 	}
 	if n := s.Tointeger(-1); n != 6 {
 		t.Errorf("expected 6, got %d", n)
@@ -371,13 +349,10 @@ func TestTogofunction(t *testing.T) {
 	s.Pushfunction(fn)
 	s.Pushinteger(400)
 	if err := s.Pcall(1, 1, 0); err != nil {
-		errdetail := s.Tostring(-1)
-		s.Close()
-		t.Fatalf("%s -- %s", err.Error(), errdetail)
+		t.Fatalf("%s -- %s", err.Error(), s.Tostring(-1))
 	}
 	if n := s.Tointeger(-1); n != 20 {
 		t.Errorf("expected 20, got %d", n)
 	}
 	s.Pop(1)
-	s.Close()
 }
