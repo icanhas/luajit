@@ -208,9 +208,16 @@ func hookevent(cs unsafe.Pointer, car unsafe.Pointer) {
 	fn(&s, &ar) // call the real hook
 }
 
-// int lua_sethook(lua_State *L, lua_Hook f, int mask, int count);
+// Sets the debugging hook function.
+// 
+// Argument fn is the hook function. mask specifies on which events the hook
+// will be called: it is formed by a bitwise OR of the constants Maskcall,
+// Maskret, Maskline, and Maskcount. The count argument is only meaningful
+// when the mask includes Maskcount. The hook is called for each event type
+// present in mask.
+// 
+// A hook is disabled by setting mask to 0.
 func (s *State) Sethook(fn Hook, mask, count int) error {
-	//C.sethook(s.l, unsafe.Pointer(&fn), C.int(mask), C.int(count))
 	s.Getglobal(namehooks)
 	if mask&Maskcall == Maskcall {
 		s.Pushstring(namecall)

@@ -117,9 +117,23 @@ const (
 
 // Debug event codes
 const (
+	// The call hook is called when the interpreter calls a function. The
+	// hook is called just after LuaJIT enters the new function, before
+	// the function gets its arguments.
 	Hookcall    = C.LUA_HOOKCALL
+	// The return hook is called when the interpreter returns from
+	// a function. The hook is called just before LuaJIT leaves the
+	// function. You have no access to the values to be returned by
+	// the function.
 	Hookret     = C.LUA_HOOKRET
+	// The line hook is called when the interpreter is about to start
+	// the execution of a new line of code, or when it jumps back in
+	// the code (even to the same line). (This event only happens while
+	// LuaJIT is executing a Lua function.)
 	Hookline    = C.LUA_HOOKLINE
+	// The count hook is called after the interpreter executes every
+	// count instructions. (This event only happens while LuaJIT is
+	// executing a Lua function.)
 	Hookcount   = C.LUA_HOOKCOUNT
 	Hooktailret = C.LUA_HOOKTAILRET
 )
