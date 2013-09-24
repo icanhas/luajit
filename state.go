@@ -622,14 +622,15 @@ func (s *State) Pushinteger(n int) {
 	C.lua_pushinteger(s.l, C.lua_Integer(n))
 }
 
-// void lua_pushlightuserdata (lua_State *L, void *p);
-//
 // Pushes a light userdata onto the stack.
 //
-// Userdata represent C values in Lua. A light userdata represents a
+// Userdata represent Go values in Lua. A light userdata represents a
 // pointer. It is a value (like a number): you do not create it, it has no
 // individual metatable, and it is not collected (as it was never created). A
-// light userdata is equal to "any" light userdata with the same C address.
+// light userdata is equal to "any" light userdata with the same address.
+func (s *State) Pushlightuserdata(p unsafe.Pointer) {
+	C.lua_pushlightuserdata(s.l, p)
+}
 
 // Pushes a nil value onto the stack.
 func (s *State) Pushnil() {
