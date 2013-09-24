@@ -70,7 +70,7 @@ type State struct {
 func Newstate() *State {
 	s := &State{C.newstate()}
 	s.Newtable()
-	s.Setglobal("_hooks")
+	s.Setglobal(namehooks)
 	return s
 }
 
