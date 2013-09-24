@@ -132,6 +132,15 @@ const (
 	Maskcount = 1 << Hookcount
 )
 
+// These are for Sethook and others
+const (
+	namehooks = "_hooks"
+	namecall  = "call"
+	nameret   = "ret"
+	nameline  = "line"
+	namecount = "count"
+)
+
 // lualib constants
 const (
 	Filehandle  = C.LUA_FILEHANDLE

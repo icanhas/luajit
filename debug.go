@@ -7,6 +7,8 @@ package luajit
 #include <lua.h>
 #include <stddef.h>
 #include <stdlib.h>
+
+extern void	sethook(lua_State*, int, int);
 */
 import "C"
 import (
@@ -19,6 +21,7 @@ import (
 // later use. To fill the other fields of Debug with useful information,
 // call Getinfo.
 type Debug struct {
+	Event int
 	// A reasonable name for the given function. Because functions in
 	// Lua are first-class values, they do not have a fixed name: some
 	// functions can be the value of multiple global variables, while
@@ -53,8 +56,25 @@ type Debug struct {
 	Lastlinedefined int
 
 	l *C.lua_State
-	d C.lua_Debug
+	d *C.lua_Debug
 }
+
+// Type for debug hook functions.
+//
+// Whenever a hook is called, its ar argument has its Event field
+// set to the specific event that triggered the hook. LuaJIT identifies
+// these events with the following constants: Hookcall, Hookret,
+// Hooktailret, Hookline, and Hookcount. Moreover, for line events,
+// the Currentline field is also set. To get the value of any other
+// field in ar, the hook must call Getinfo. For return events, event
+// can be Hookret, the normal value, or Hooktailret. In the latter case,
+// LuaJIT is simulating a return from a function that did a tail call;
+// in this case, it is useless to call Getinfo.
+//
+// While LuaJIT is running a hook, it disables other calls to
+// hooks. Therefore, if a hook calls back LuaJIT to execute a function or
+// a chunk, this execution occurs without any calls to hooks.
+type Hook func(s *State, ar *Debug)
 
 func Newdebug(s *State) *Debug {
 	d := Debug{}
@@ -64,6 +84,7 @@ func Newdebug(s *State) *Debug {
 
 // Sync a Debug with its C struct.
 func (ar *Debug) update() {
+	ar.Event = int(ar.d.event)
 	if ar.d.name != nil {
 		ar.Name = C.GoString(ar.d.name)
 	}
@@ -117,7 +138,7 @@ func (ar *Debug) update() {
 func (d *Debug) Getinfo(what string) error {
 	cs := C.CString(what)
 	defer C.free(unsafe.Pointer(cs))
-	if int(C.lua_getinfo(d.l, cs, &d.d)) == 0 {
+	if int(C.lua_getinfo(d.l, cs, d.d)) == 0 {
 		return fmt.Errorf("The significant owl hoots in the night.")
 	}
 	d.update()
@@ -138,7 +159,7 @@ func (d *Debug) Getinfo(what string) error {
 // Returns an empty string (and pushes nothing) when the index is greater
 // than the number of active local variables.
 func (d *Debug) Getlocal(n int) string {
-	cs := C.lua_getlocal(d.l, &d.d, C.int(n))
+	cs := C.lua_getlocal(d.l, d.d, C.int(n))
 	if cs == nil {
 		return ""
 	}
@@ -154,14 +175,67 @@ func (d *Debug) Getlocal(n int) string {
 // has called level n. When there are no errors, Getstack returns nil; when
 // called with a level greater than the stack depth, it returns the error.
 func (d *Debug) Getstack(level int) error {
-	if int(C.lua_getstack(d.l, C.int(level), &d.d)) == 0 {
+	if int(C.lua_getstack(d.l, C.int(level), d.d)) == 0 {
 		return fmt.Errorf("stack depth exceeded")
 	}
 	d.update()
 	return nil
 }
 
+//export hookevent
+func hookevent(cs unsafe.Pointer, car unsafe.Pointer) {
+	s := State{(*C.lua_State)(cs)}
+	ar := Debug{}
+	ar.d = (*C.lua_Debug)(car)
+	ar.update()
+
+	s.Getglobal(namehooks)
+	switch ar.Event {
+	case Hookcall:
+		s.Getfield(-1, namecall)
+	case Hookret:
+		s.Getfield(-1, nameret)
+	case Hookline:
+		s.Getfield(-1, nameline)
+	case Hookcount:
+		s.Getfield(-1, namecount)
+	default:
+		return
+	}
+	fp := unsafe.Pointer(s.Touserdata(-1))
+	s.Pop(1) // pop hook table
+	fn := *(*func(*State, *Debug))(fp)
+	fn(&s, &ar) // call the real hook
+}
+
 // int lua_sethook(lua_State *L, lua_Hook f, int mask, int count);
+func (s *State) Sethook(fn Hook, mask, count int) error {
+	//C.sethook(s.l, unsafe.Pointer(&fn), C.int(mask), C.int(count))
+	s.Getglobal(namehooks)
+	if mask&Maskcall == Maskcall {
+		s.Pushstring(namecall)
+		s.Pushlightuserdata(unsafe.Pointer(&fn))
+		s.Settable(-3)
+	}
+	if mask&Maskret == Maskret {
+		s.Pushstring(nameret)
+		s.Pushlightuserdata(unsafe.Pointer(&fn))
+		s.Settable(-3)
+	}
+	if mask&Maskline == Maskline {
+		s.Pushstring(nameline)
+		s.Pushlightuserdata(unsafe.Pointer(&fn))
+		s.Settable(-3)
+	}
+	if mask&Maskcount == Maskcount {
+		s.Pushstring(namecount)
+		s.Pushlightuserdata(unsafe.Pointer(&fn))
+		s.Settable(-3)
+	}
+	s.Pop(1) // pop hook table
+	C.sethook(s.l, C.int(mask), C.int(count))
+	return nil
+}
 
 // Sets the value of a local variable of a given activation
 // record. Parameters d and n are as in Getlocal. Setlocal assigns the
@@ -171,5 +245,5 @@ func (d *Debug) Getstack(level int) error {
 // Returns an empty string (and pops nothing) when the index is greater
 // than the number of active local variables.
 func (d *Debug) Setlocal(n int) string {
-	return C.GoString(C.lua_setlocal(d.l, &d.d, C.int(n)))
+	return C.GoString(C.lua_setlocal(d.l, d.d, C.int(n)))
 }

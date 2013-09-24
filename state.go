@@ -68,7 +68,10 @@ type State struct {
 // Creates & initializes a new State and returns a pointer to it. Returns
 // nil on error.
 func Newstate() *State {
-	return &State{C.newstate()}
+	s := &State{C.newstate()}
+	s.Newtable()
+	s.Setglobal("_hooks")
+	return s
 }
 
 // Controls VM
