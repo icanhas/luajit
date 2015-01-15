@@ -1,10 +1,10 @@
 package luajit
 
 /*
-#cgo LDFLAGS: -lluajit
+#cgo LDFLAGS: -lluajit-5.1
 #cgo linux LDFLAGS: -lm -ldl
 
-#include <lua.h>
+#include <luajit-2.0/lua.h>
 #include <stddef.h>
 #include <stdlib.h>
 

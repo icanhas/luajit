@@ -3,9 +3,9 @@
 package luajit
 
 /*
-#include <lua.h>
-#include <luajit.h>
-#include <lualib.h>
+#include <luajit-2.0/luajit.h>
+#include <luajit-2.0/lua.h>
+#include <luajit-2.0/lualib.h>
 */
 import "C"
 import "errors"
